@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
 import { Box, Slider, Button, Typography } from '@mui/material';
 
 // Connect to the Python backend
@@ -9,6 +11,13 @@ const SortingVisualizer = () => {
   const [array, setArray] = useState([]);
   const [colors, setColors] = useState([]);
   const canvasRef = useRef(null);
+  const [algorithm,setAlgorithm] = useState("bubble")
+
+  const algorithms = [
+    {label:"Bubble Sort",id:"bubble"},
+    {label: "Merge Sort", id: "merge"},
+    {label: "Quick Sort", id: "quick"}
+  ];
 
   // State for slider values
   const [size, setSize] = useState(20);
@@ -25,6 +34,9 @@ const SortingVisualizer = () => {
     });
     socket.on('done', (data) => {
       alert(data.message);
+    });
+    socket.on("error", (data)=>{
+      alert("An error occurred, retry again");
     });
     return () => {
       socket.off('update');
@@ -43,7 +55,12 @@ const SortingVisualizer = () => {
 
   // Tell the backend to start sorting
   const startSorting = () => {
-    socket.emit('start_sort', { array, speed });
+    socket.emit('start_sort', { array, speed, algorithm });
+  };
+
+  const UpdateAlgoritm = (newAlgo) => {
+    setAlgorithm(newAlgo);
+    //console.log(algorithm)
   };
 
   // Draw the current array on the canvas
@@ -90,8 +107,15 @@ const SortingVisualizer = () => {
       {/* Buttons */}
       <Box sx={{ display: 'flex', gap: 2, marginBottom: 3 }}>
         <Button variant="contained" color="primary" onClick={generateArray}>
-          Generate
+          Generate Random Array
         </Button>
+        <Autocomplete
+          disablePortal
+          options={algorithms}
+          onChange={(e,newAlgo) => UpdateAlgoritm(newAlgo.id)}
+          sx={{ width: 300 }}
+          renderInput={(params) => <TextField {...params} label="Algorithms" />}
+/>
         <Button variant="contained" color="secondary" onClick={startSorting}>
           Start Sorting
         </Button>
